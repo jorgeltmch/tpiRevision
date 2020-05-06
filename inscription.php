@@ -9,9 +9,11 @@ if (!empty($username) && !empty($sha1pwd)) {
   if ($sha1pwd == $sha1pwd2) {
     if (!userExists($username)){
       if (addUser($username, $sha1pwd)) {
-        //Si l'user est inscrit, il est automatiquement connecté.
-        echo "CONNECTE";
-        $_SESSION["username"] = $username;   
+        echo "USER AJOUTE";
+
+        header("Location: login.php");
+        exit;
+
       }
       else{
         echo "ERREUR AVEC LA CREATION DE L'USER";
@@ -21,44 +23,55 @@ if (!empty($username) && !empty($sha1pwd)) {
       echo "L'USER N'EXISTE DEJA";
     }
   } else {
-    echo "LES MDP NE CORRESPONDENT PAS";
+    echo "LES MDP NE CORRESPONDENT PAS"; //TODO : LIST ERRORS
   }
-  
-    
 }
 
 ?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TPI</title>
+    <link rel="stylesheet" href="./css/bootstrap.min.css">
+    <link rel="stylesheet" href="./css/style.css">
+    <title>Login</title>
 </head>
-<body>
-<?php if(empty($_SESSION["username"])) :?>
+<body class="bg-light">
+<?php include("navbar.php") ?>
 
-<form action="#" method="post">
-  <div class="container">
-    <label for="username"><b>Username</b></label>
-    <input type="text" placeholder="Enter Username" name="username" required>
+    <div class="container">
 
-    <label for="password"><b>Password</b></label>
-    <input type="password" placeholder="Enter Password" name="password" required>
+    <div class="row">
+      <div class="col-xs-12 col-sm-12 col-lg-6 col-md-6 mx-auto">
+        <div class="card login">
+            <article class="card-body ">
+                <h4 class="card-title text-center">Inscription</h4>
+                <hr>
+                <form action="#" method="post">
+                <div class="form-group">
+                    <input class="form-control" placeholder="Username" name="username" required >
+                </div> 
+                <div class="form-group">
+                    <input class="form-control" placeholder="******" type="password" name="password" required>
+                </div> 
 
-    <label for="password"><b>Reentrez votre mdp</b></label>
-    <input type="password" placeholder="Enter Password" name="password2" required>
+                <div class="form-group">
+                    <input class="form-control" placeholder="Confirm password" type="password" name="password" required>
+                </div> 
 
-    <button type="submit">Inscription</button>
-    <p>Déjà inscrit ? <a href="./inscription.php">Connectez vous ici</a></p>
+                <div class="form-group">
+                <button type="submit" class="btn btn-primary btn-block"> Sign up </button>
+                </div> 
 
-  </div>
-</form>
+                <p class="text-center"><a href="./login.php" class="link">Déjà inscrit ?</a></p>
+                </form>
+            </article>
+        </div> 
+      </div>
+    </div>
 
-<?php else:?>
-
-    <p>Connecté à <b><?php echo($_SESSION["username"]) ?></b> <a href="./logout.php">Logout ici</a></p>
-
-<?php endif;?>
+    
 </body>
 </html>
