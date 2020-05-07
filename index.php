@@ -21,8 +21,13 @@ $posts = getPosts();
 <body class="bg-light">
     
     <?php include("navbar.php") ?>
-    <?php echo displayPosts($posts) ?>
-    
+    <div class="container-fluid">
+    <div class="container grille-articles">
+         <div class="row">
+            <?php echo displayPosts($posts) ?>
+         </div>
+      </div>
+    </div>    
     <!------------------------------------------------------------------------------- Grille d'articles --------------------------------------------------------------------------------->
     <!-- center -->
     <!-- <div class="container-fluid">

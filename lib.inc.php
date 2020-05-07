@@ -1,6 +1,7 @@
 <?php
 
 require('./db/dbconstants.inc.php');
+require('./errors.inc.php');
 
 session_start();
 
@@ -33,6 +34,18 @@ function dbTPI()
     return $dbc;
 }
 
+function showDanger($error){
+    echo "<div class=\"alert alert-danger\" role=\"alert\">" . $error . "</div>";
+}
+
+function showWarning($warning){
+    echo "<div class=\"alert alert-warning\" role=\"alert\">" . $warning . "</div>";
+}
+
+function showSucces($success){
+    echo "<div class=\"alert alert-success\" role=\"alert\">" . $success . "</div>";
+}
+
 function userExists($username){
     $sql = "SELECT idusers FROM users WHERE username=:username ";
 
@@ -58,8 +71,8 @@ function userExists($username){
     return (isset($answer["idusers"]));
 }
 
-function addUser($username, $sha1pwd){
-    $sql = "INSERT INTO users(username, pwd) VALUES(:username, :pwd)";
+function addUser($username, $sha1pwd, $nom, $prenom, $bio){
+    $sql = "INSERT INTO users(username, pwd, nom, prenom, bio) VALUES(:username, :pwd, :nom, :prenom, :bio)";
 
     static $ps = null;
 
@@ -72,11 +85,13 @@ function addUser($username, $sha1pwd){
             array(
                 'username' => $username,
                 'pwd' => $sha1pwd,
+                'nom' => $nom,
+                'prenom' => $prenom,
+                'bio' => $bio
             )
         );
         return true;
     } catch (\Throwable $th) {
-        //die("L'utilisateur n'a pas pu être créé");
         return false;
     }
 
@@ -204,14 +219,78 @@ function addPost($titre, $description, $idUser){
         //die("L'utilisateur n'a pas pu être créé");
         return false;
     }
-
 }
 
+function getPostsFromUser($idUser){
+    $sql = "SELECT * FROM posts WHERE idUsers=:idU";
+    $answer = array();
+
+    static $ps = null;
+
+    if ($ps == null) {
+        // Préparer mon prepare statement
+        try {
+            $ps = dbTPI()->prepare($sql);
+        } catch (Exception $e) {
+            echo 'Erreur : ' . $e->getMessage() . '<br />';
+            echo 'N° : ' . $e->getCode();
+            // @TODO: Gérer les erreurs
+            die('Unable to create prepare statement');
+        }
+    };
+    // Exécuter le prepare statement;
+    try {
+        $ps->bindParam(':idU', $idUser, PDO::PARAM_STR); //force le param a etre un str
+        if ($ps->execute()) {
+            $answer = $ps->fetchAll(PDO::FETCH_ASSOC);
+        } else {
+            echo "Erreur : Impossible d'exécuter le ps<br />";
+        }
+    } catch (Exception $e) {
+        echo 'Erreur : ' . $e->getMessage() . '<br />';
+        echo 'N° : ' . $e->getCode();
+        die("Même pas foutu de vérifier si un utilisateur existe ...");
+    }
+
+    return $answer;
+}
+
+function getUserInfo($uid){
+    $sql = "SELECT bio, nom, prenom FROM users WHERE idusers=:idU LIMIT 1";
+    $answer = array();
+
+    static $ps = null;
+
+    if ($ps == null) {
+        // Préparer mon prepare statement
+        try {
+            $ps = dbTPI()->prepare($sql);
+        } catch (Exception $e) {
+            echo 'Erreur : ' . $e->getMessage() . '<br />';
+            echo 'N° : ' . $e->getCode();
+            // @TODO: Gérer les erreurs
+            die('Unable to create prepare statement');
+        }
+    };
+    // Exécuter le prepare statement;
+    try {
+        $ps->bindParam(':idU', $uid, PDO::PARAM_STR); //force le param a etre un str
+        if ($ps->execute()) {
+            $answer = $ps->fetch(PDO::FETCH_ASSOC);
+        } else {
+            echo "Erreur : Impossible d'exécuter le ps<br />";
+        }
+    } catch (Exception $e) {
+        echo 'Erreur : ' . $e->getMessage() . '<br />';
+        echo 'N° : ' . $e->getCode();
+        die("Même pas foutu de vérifier si un utilisateur existe ...");
+    }
+
+    return $answer;
+}
 
 function displayPosts($posts){
-    $html = "<div class=\"container-fluid\">". //Container principal
-            "  <div class=\"container grille-articles\">". //Grille des articles
-            "      <div class=\"row\">";
+    $html = "";
     foreach ($posts as $key => $value) {
     $html .= "          <article class=\"col-xs-12 col-sm-12 col-lg-3 col-md-3\">". //Article
              "              <h2>". $value["titrePost"] .  "</h2>".
@@ -219,9 +298,8 @@ function displayPosts($posts){
              "              <p>". $value["descriptionPost"] .  "</p>".
              "          </article>";
     }
-    $html .= "      </div>".
-             "  </div>".
-             "</div>";
+
              
     return $html;
 }
+

@@ -1,16 +1,27 @@
 <?php
 require('./lib.inc.php');
 
-$username = (empty($_POST['username'])) ? "" : $_POST['username'];
-$sha1pwd = (empty($_POST['password'])) ? "" : sha1($_POST['password']);
+if (!empty($_SESSION["username"])) {
+  header("Location: index.php"); 
+  exit();
+}
+
+$_SESSION["ERR"] = ""; //Vider le cache des erreurs quand on arrive sur la page
+
+$username = (empty($_POST['username'])) ? "" : filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING);;
+$sha1pwd = (empty($_POST['password'])) ? "" : sha1( filter_input(INPUT_POST, 'password', FILTER_SANITIZE_STRING));
 
 if (!empty($username) && !empty($sha1pwd)) {
     if (connexion($username, $sha1pwd)){ //lorsqu'un utilisateur a crée un compte il est logué
       echo "CONNECTE";
       $_SESSION["username"] = $username;
+      $_SESSION["uid"] = getIdUser($username);
+      //Quand user connecté redirect sur index
+      header("Location: index.php");
+      exit;
     }
     else{
-      echo "ERREUR";
+      $_SESSION["ERR"] = ERR05;
     }
 }
 
@@ -31,6 +42,10 @@ if (!empty($username) && !empty($sha1pwd)) {
 
     <div class="row">
       <div class="col-xs-12 col-sm-12 col-lg-6 col-md-6 mx-auto">
+        <?php if(!empty($_SESSION["ERR"])){
+                showDanger($_SESSION["ERR"]);
+              } 
+        ?>
         <div class="card login">
             <article class="card-body ">
                 <h4 class="card-title text-center">Login</h4>
