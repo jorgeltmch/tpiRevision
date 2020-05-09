@@ -15,35 +15,47 @@ $nom = (empty($_POST['nom'])) ? "" : filter_input(INPUT_POST, 'nom', FILTER_SANI
 $prenom = (empty($_POST['prenom'])) ? "" : filter_input(INPUT_POST, 'prenom', FILTER_SANITIZE_STRING);
 $bio = (empty($_POST['bio'])) ? "" : filter_input(INPUT_POST, 'bio', FILTER_SANITIZE_STRING);
 
+$nomFichier = (empty($_FILES['img']['name'])) ? "" : $_FILES['img']['name'];
+$typeFichier = (empty($_FILES['img']['type'])) ? "" : $_FILES['img']['type'];
+$sizeFichier = (empty($_FILES['img']['size'])) ? "" : $_FILES['img']['size'];
+$tmpNameFichier = (empty($_FILES['img']['tmp_name'])) ? "" : $_FILES['img']['tmp_name'];
+$errFichier = (empty($_FILES['img']['error'])) ? "" : $_FILES['img']['error'][0] ;
 
-if (!empty($username) && !empty($sha1pwd) && !empty($sha1pwd2) && !empty($nom) && !empty($prenom) && !empty($bio)) {
+
+if (!empty($username) && !empty($sha1pwd) && !empty($sha1pwd2) && !empty($nom) && !empty($prenom) && !empty($bio) && !empty($nomFichier) && !empty($typeFichier) && !empty($sizeFichier) && !empty($tmpNameFichier)) {
   if (strlen($bio) <= 220) //TODO : 220 DANS CONSTANTE
   {
-    if ($sha1pwd == $sha1pwd2) {
-      if (!userExists($username)){
-        if (addUser($username, $sha1pwd, $nom, $prenom, $bio)) {
-          echo "USER AJOUTE";
-  
-          header("Location: login.php");
-          exit;
-  
+    if ($errFichier == 0) {
+      if ($sha1pwd == $sha1pwd2) {
+        if (!userExists($username)){
+          if (addUser($username, $sha1pwd, $nom, $prenom, $bio, $typeFichier, $nomFichier,  $sizeFichier, $tmpNameFichier)) {
+            echo "USER AJOUTE";
+    
+            header("Location: login.php");
+            exit;
+    
+          }
+          else{
+            $_SESSION["ERR"] = ERR01;
+          }
         }
         else{
-          $_SESSION["ERR"] = ERR01;
+          $_SESSION["ERR"] = ERR02;
+    
         }
+      } else {
+        $_SESSION["ERR"] = ERR03;
+    
       }
-      else{
-        $_SESSION["ERR"] = ERR02;
-  
-      }
-    } else {
-      $_SESSION["ERR"] = ERR03;
-  
+    }
+    else{
+      $_SESSION["ERR"] = ERR06;
     }
   }
   else{
-    $_SESSION["ERR"] = ERR06;
+    $_SESSION["ERR"] = ERR07;
   }
+    
   
 }
 
@@ -75,7 +87,7 @@ if (!empty($username) && !empty($sha1pwd) && !empty($sha1pwd2) && !empty($nom) &
             <article class="card-body ">
                 <h4 class="card-title text-center">Inscription</h4>
                 <hr>
-                <form action="#" method="post">
+                <form action="#" enctype="multipart/form-data" method="post">
                 <div class="form-group">
                     <input class="form-control" placeholder="Username" name="username" required >
                 </div> 
@@ -97,6 +109,16 @@ if (!empty($username) && !empty($sha1pwd) && !empty($sha1pwd2) && !empty($nom) &
 
                 <div class="form-group">
                     <textarea class="form-control" type="text" name="bio" rows="8" placeholder="Votre article ..." maxlength="220" required></textarea>
+                </div>
+
+                <div class="input-group mb-3">
+                  <div class="custom-file">
+                    <input type="file" class="custom-file-input" name="img" multiple accept="image/x-png,image/gif,image/jpeg">
+                    <label class="custom-file-label" for="inputGroupFile02">Choose file</label>
+                  </div>
+                  <div class="input-group-append">
+                    <span class="input-group-text"  >Upload</span>
+                  </div>
                 </div>
 
                 <div class="form-group">

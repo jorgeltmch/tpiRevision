@@ -12,3 +12,13 @@
 .alert{
     margin-top: 5%;
 }
+
+.imgProfil{
+    height: 40px;
+    width: 40px;
+    margin-right: 10px;
+}
+
+.post{
+    margin-top: 20px;
+}

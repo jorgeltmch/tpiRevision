@@ -71,8 +71,8 @@ function userExists($username){
     return (isset($answer["idusers"]));
 }
 
-function addUser($username, $sha1pwd, $nom, $prenom, $bio){
-    $sql = "INSERT INTO users(username, pwd, nom, prenom, bio) VALUES(:username, :pwd, :nom, :prenom, :bio)";
+function addUser($username, $sha1pwd, $nom, $prenom, $bio, $typeFichier, $nomFichier,  $sizeFichier, $tmpNameFichier){
+    $sql = "INSERT INTO users(username, pwd, nom, prenom, bio, imgProfil) VALUES(:username, :pwd, :nom, :prenom, :bio, :nomF)";
 
     static $ps = null;
 
@@ -87,15 +87,57 @@ function addUser($username, $sha1pwd, $nom, $prenom, $bio){
                 'pwd' => $sha1pwd,
                 'nom' => $nom,
                 'prenom' => $prenom,
-                'bio' => $bio
+                'bio' => $bio,
+                'nomF' => $nomFichier
             )
         );
+        $tmp = changeFileNameIfExists($nomFichier);
+        addMediaToServer($tmp, $tmpNameFichier);
         return true;
     } catch (\Throwable $th) {
         return false;
     }
 
 }
+function changeFileNameIfExists($fileName , $cpt = 0){
+
+    if (file_exists("./img/" . $fileName)) {
+        while(file_exists("./img/" . $cpt . $fileName)){
+            $cpt++;
+        }
+    
+        return $cpt . $fileName; 
+    }
+    else{
+        return $fileName; 
+    }
+   
+   
+}
+
+function addMediaToServer($nomFichier, $tmpName)
+{
+    $typesAcceptes = array("image/gif", "image/png", "image/jpeg", "video/mp4", "audio/mpeg"); 
+
+    try {
+        //$test = mime_content_type($nomFichier);
+        if (in_array(mime_content_type($tmpName), $typesAcceptes)) {
+
+                //$nomFichier = $cpt .= $nomFichier;
+                if (!move_uploaded_file($tmpName, "./img/" .  changeFileNameIfExists($nomFichier))){
+                    throw new Exception();    //si il retourne false, throw, si il throw deja il va dans le catch
+            }
+    
+              
+            
+        }
+    } catch (\Throwable $th) {
+        throw new Exception();
+    }
+
+
+}
+
 
 function getIdUser($username){
     $sql = "SELECT idusers FROM users WHERE username=:username LIMIT 1";
@@ -162,6 +204,40 @@ function connexion($username, $sha1pwd){
         die("Même pas foutu de vérifier si un utilisateur existe ...");
     }
     return (isset($answer["idusers"]));
+}
+
+function getUserProfilePicture($uid){
+    $sql = "SELECT imgProfil FROM users WHERE idusers=:idU LIMIT 1";
+    $answer = array();
+
+    static $ps = null;
+
+    if ($ps == null) {
+        // Préparer mon prepare statement
+        try {
+            $ps = dbTPI()->prepare($sql);
+        } catch (Exception $e) {
+            echo 'Erreur : ' . $e->getMessage() . '<br />';
+            echo 'N° : ' . $e->getCode();
+            // @TODO: Gérer les erreurs
+            die('Unable to create prepare statement');
+        }
+    };
+    // Exécuter le prepare statement;
+    try {
+        $ps->bindParam(':idU', $uid, PDO::PARAM_STR); //force le param a etre un str
+        if ($ps->execute()) {
+            $answer = $ps->fetch(PDO::FETCH_ASSOC);
+        } else {
+            echo "Erreur : Impossible d'exécuter le ps<br />";
+        }
+    } catch (Exception $e) {
+        echo 'Erreur : ' . $e->getMessage() . '<br />';
+        echo 'N° : ' . $e->getCode();
+        die("Même pas foutu de vérifier si un utilisateur existe ...");
+    }
+
+    return (empty($answer["imgProfil"])) ? "profil.png" : $answer["imgProfil"];
 }
 
 
@@ -292,11 +368,23 @@ function getUserInfo($uid){
 function displayPosts($posts){
     $html = "";
     foreach ($posts as $key => $value) {
-    $html .= "          <article class=\"col-xs-12 col-sm-12 col-lg-3 col-md-3\">". //Article
+    $html .= "          <article class=\"col-xs-12 col-sm-12 col-lg-3 col-md-3 post\">". //Article
              "              <h2>". $value["titrePost"] .  "</h2>".
              "              <p><i>par ". $value["auteur"] .  "</i></p>".
-             "              <p>". $value["descriptionPost"] .  "</p>".
-             "          </article>";
+             "              <p>". $value["descriptionPost"] .  "</p>";
+
+             if (!empty($_SESSION["username"])) 
+             {
+                if ($value["auteur"] == $_SESSION["username"]) 
+                {
+                    $html .= "<button type=\"button\" class=\"btn btn-outline-secondary\">Edit</button>"
+                            ."<button type=\"button\" class=\"btn btn-outline-danger\">Supprimer</button>";
+                }
+             }
+
+    $html .= "          </article>";
+             
+             
     }
 
              

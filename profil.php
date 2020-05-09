@@ -29,7 +29,7 @@ $userInfo = getUserInfo($_SESSION["uid"]);
         <div class="container grille-articles">
             <div class="row"> 
                 <div class="col-xs-12 col-sm-12 col-lg-3 col-md-3">
-                    <img src="img/profil.png" class="img-fluid img-thumbnail" alt="profil">
+                    <img src="img/<?php echo getUserProfilePicture($_SESSION["uid"])?>" class="img-fluid img-thumbnail" height="500px" width="500px" alt="profil">
                 </div>
                 <article class="col-xs-12 col-sm-12 col-lg-3 col-md-3">
                     <h2> <?php echo $_SESSION["username"] ?> </h2>
