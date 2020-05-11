@@ -1,14 +1,20 @@
-<nav class="navbar navbar-expand navbar-dark bg-dark">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
   <a class="navbar-brand" href="#">TPI</a>
-    <ul class="nav navbar-nav navbar-left mr-auto">
-      <li class="nav-item active"> <!-- le active pour page active  -->
-         <a class="nav-link" href="index.php">Home  </a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarNav">
+    <ul class="navbar-nav navbar-left mr-auto">
+      <li class="nav-item active">
+        <a class="nav-link" href="index.php">Home</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" href="newPost.php">Nouveau post</a>
       </li>
+
     </ul>
-    <ul class="nav navbar-nav navbar-right">
+
+    <ul class="navbar-nav navbar-right">
       
      
         <!--  formulaire pour buton comme <a>  -->
@@ -31,6 +37,8 @@
 
         <?php endif; ?>
 
+
       </li>
     </ul>
+  </div>
 </nav>
