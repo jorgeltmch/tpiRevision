@@ -10,8 +10,7 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-function dbTPI()
-{
+function dbTPI(){
     static $dbc = null;
 
     if ($dbc == null) {
@@ -99,6 +98,7 @@ function addUser($username, $sha1pwd, $nom, $prenom, $bio, $typeFichier, $nomFic
     }
 
 }
+
 function changeFileNameIfExists($fileName , $cpt = 0){
 
     if (file_exists("./img/" . $fileName)) {
@@ -115,8 +115,7 @@ function changeFileNameIfExists($fileName , $cpt = 0){
    
 }
 
-function addMediaToServer($nomFichier, $tmpName)
-{
+function addMediaToServer($nomFichier, $tmpName){
     $typesAcceptes = array("image/gif", "image/png", "image/jpeg", "video/mp4", "audio/mpeg"); 
 
     try {
@@ -137,7 +136,6 @@ function addMediaToServer($nomFichier, $tmpName)
 
 
 }
-
 
 function getIdUser($username){
     $sql = "SELECT idusers FROM users WHERE username=:username LIMIT 1";
@@ -240,9 +238,8 @@ function getUserProfilePicture($uid){
     return (empty($answer["imgProfil"])) ? "profil.png" : $answer["imgProfil"];
 }
 
-
 function getPosts(){
-    $sql = "SELECT titrePost, descriptionPost, auteur FROM posts";
+    $sql = "SELECT idposts, titrePost, descriptionPost, auteur FROM posts";
     $answer = array();
 
     static $ps = null;
@@ -295,6 +292,82 @@ function addPost($titre, $description, $idUser){
         //die("L'utilisateur n'a pas pu être créé");
         return false;
     }
+}
+
+function editPost($idPost, $titre, $description){
+    $sql = " UPDATE posts SET titrePost = :t, descriptionPost = :d WHERE idposts = :id";
+
+    static $ps = null;
+
+    try {
+        if ($ps == null) {
+            $ps = dbTPI()->prepare($sql);
+        }
+        
+        $ps->bindParam(':t', $titre, PDO::PARAM_STR); //force le param a etre un str
+        $ps->bindParam(':d', $description, PDO::PARAM_STR); 
+        $ps->bindParam(':id', $idPost, PDO::PARAM_STR); 
+
+        return $ps->execute();
+
+    } catch (\Throwable $th) {
+        //die("L'utilisateur n'a pas pu être créé");
+        return false;
+    }
+}
+
+function deletePost($idPost){
+    $sql = " DELETE FROM posts WHERE idposts = :id";
+
+    static $ps = null;
+
+    try {
+        if ($ps == null) {
+            $ps = dbTPI()->prepare($sql);
+        }
+        
+        $ps->bindParam(':id', $idPost, PDO::PARAM_STR); //force le param a etre un str
+
+        return $ps->execute();
+
+    } catch (\Throwable $th) {
+        //die("L'utilisateur n'a pas pu être créé");
+        return false;
+    }
+}
+
+function getIdByUsername($username){
+    $sql = "SELECT idusers FROM users WHERE username=:u LIMIT 1";
+    $answer = array();
+
+    static $ps = null;
+
+    if ($ps == null) {
+        // Préparer mon prepare statement
+        try {
+            $ps = dbTPI()->prepare($sql);
+        } catch (Exception $e) {
+            echo 'Erreur : ' . $e->getMessage() . '<br />';
+            echo 'N° : ' . $e->getCode();
+            // @TODO: Gérer les erreurs
+            die('Unable to create prepare statement');
+        }
+    };
+    // Exécuter le prepare statement;
+    try {
+        $ps->bindParam(':u', $username, PDO::PARAM_STR); //force le param a etre un str
+        if ($ps->execute()) {
+            $answer = $ps->fetch(PDO::FETCH_ASSOC);
+        } else {
+            echo "Erreur : Impossible d'exécuter le ps<br />";
+        }
+    } catch (Exception $e) {
+        echo 'Erreur : ' . $e->getMessage() . '<br />';
+        echo 'N° : ' . $e->getCode();
+        die("Même pas foutu de vérifier si un utilisateur existe ...");
+    }
+
+    return $answer["idusers"];
 }
 
 function getPostsFromUser($idUser){
@@ -365,20 +438,60 @@ function getUserInfo($uid){
     return $answer;
 }
 
+function getPostInfo($idPost){
+    $sql = "SELECT titrePost, descriptionPost, auteur FROM posts WHERE idposts=:id LIMIT 1";
+    $answer = array();
+
+    static $ps = null;
+
+    if ($ps == null) {
+        // Préparer mon prepare statement
+        try {
+            $ps = dbTPI()->prepare($sql);
+        } catch (Exception $e) {
+            echo 'Erreur : ' . $e->getMessage() . '<br />';
+            echo 'N° : ' . $e->getCode();
+            // @TODO: Gérer les erreurs
+            die('Unable to create prepare statement');
+        }
+    };
+    // Exécuter le prepare statement;
+    try {
+        $ps->bindParam(':id', $idPost, PDO::PARAM_STR); //force le param a etre un str
+        if ($ps->execute()) {
+            $answer = $ps->fetch(PDO::FETCH_ASSOC);
+        } else {
+            echo "Erreur : Impossible d'exécuter le ps<br />";
+        }
+    } catch (Exception $e) {
+        echo 'Erreur : ' . $e->getMessage() . '<br />';
+        echo 'N° : ' . $e->getCode();
+        die("Même pas foutu de vérifier si un utilisateur existe ...");
+    }
+
+    return $answer;
+}
+
 function displayPosts($posts){
     $html = "";
+
+    
     foreach ($posts as $key => $value) {
+    $auteur = $value["auteur"];
     $html .= "          <article class=\"col-xs-12 col-sm-12 col-lg-3 col-md-3 post\">". //Article
-             "              <h2>". $value["titrePost"] .  "</h2>".
-             "              <p><i>par ". $value["auteur"] .  "</i></p>".
+             "              <h2><a class=\"postlink\" href=\"post.php?post=" . $value["idposts"] .  "\">". $value["titrePost"] .  "</a></h2>".
+             "              <p><i>par <a href=\"user.php?username=$auteur\">" . $value["auteur"]  . "</a></i></p>".
              "              <p>". $value["descriptionPost"] .  "</p>";
 
              if (!empty($_SESSION["username"])) 
              {
                 if ($value["auteur"] == $_SESSION["username"]) 
                 {
-                    $html .= "<button type=\"button\" class=\"btn btn-outline-secondary\">Edit</button>"
-                            ."<button type=\"button\" class=\"btn btn-outline-danger\">Supprimer</button>";
+                    $html .= "<form method=\"post\" action=\"./editPost.php\">
+                                <input type=\"hidden\" name=\"idPost\"  value=\"" . $value["idposts"] . "\" /> 
+                                <button class=\"btn btn-outline-secondary\" name=\"edit\" type=\"submit\" value=\"" . $value["idposts"] ."\" />Edit</button>
+                                <button class=\"btn btn-outline-danger\" name=\"delete\" type=\"submit\" value=\"" . $value["idposts"] ."\" />Delete</button>
+                                </form>";
                 }
              }
 
@@ -391,3 +504,31 @@ function displayPosts($posts){
     return $html;
 }
 
+function displayOnePost($idPost){
+
+    $infos = getPostInfo($idPost);
+
+    $html = "         <article class=\"col-xs-12 col-sm-12 col-lg-12 col-md-12 text-center\">
+                        <h2>". $infos["titrePost"] .  "</h2>
+                        <p><i>par " . $infos["auteur"] .  "</i></p>         
+                      </article>";
+    $html .= "         <article class=\"col-xs-12 col-sm-12 col-lg-12 col-md-12 text-center \">
+                        <p>". $infos["descriptionPost"] .  "</p>     
+                      </article>";
+
+        if (!empty($_SESSION["username"])) 
+        {
+            if ($infos["auteur"] == $_SESSION["username"]) 
+            {
+                $html .= "<article class=\"col-xs-12 col-sm-12 col-lg-12 col-md-12 text-center\">
+                            <form method=\"post\" action=\"./editPost.php\">
+                            <input type=\"hidden\" name=\"idPost\"  value=\"" . $idPost . "\" /> 
+                            <button class=\"btn btn-outline-secondary\" name=\"edit\" type=\"submit\" value=\"" . $idPost ."\" />Edit</button>
+                            <button class=\"btn btn-outline-danger\" name=\"delete\" type=\"submit\" value=\"" . $idPost ."\" />Delete</button>
+                            </form>
+                          </article>";
+            }
+        }
+
+    return $html;
+}

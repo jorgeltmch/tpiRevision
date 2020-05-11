@@ -1,12 +1,9 @@
 <?php
-require('./lib.inc.php');
+    require('./lib.inc.php');
 
-$posts = getPosts();
+    $_SESSION["ERR"] = ""; //Vider le cache des erreurs quand on arrive sur la page
 
-//var_dump($posts);
-
-//error_log("entrer dans le fichier index");
-
+    $idPost = $_GET["post"];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -24,7 +21,7 @@ $posts = getPosts();
     <div class="container-fluid">
     <div class="container grille-articles">
          <div class="row">
-            <?php echo displayPosts($posts) ?>
+            <?php echo displayOnePost($idPost) ?>
          </div>
       </div>
     </div>    

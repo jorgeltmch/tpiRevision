@@ -22,3 +22,7 @@
 .post{
     margin-top: 20px;
 }
+
+.postlink{
+    color: inherit;
+}
